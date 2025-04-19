@@ -1,11 +1,21 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UsersMapper } from './mappers/users.mapper';
+import { IUsersRepository } from './users.repository.interface';
 
 @Injectable()
 export class UsersService {
-  create(createUserDto: CreateUserDto) {
-    return 'This action adds a new user';
+  constructor(
+    @Inject('IUsersRepository')
+    private readonly repository: IUsersRepository,
+    private readonly mapper: UsersMapper,
+  ) {}
+
+  async create(createUserDto: CreateUserDto) {
+    const userEntity = this.mapper.toEntity(createUserDto);
+    const result = await this.repository.create(userEntity);
+    return this.mapper.toDto(result);
   }
 
   findAll() {
