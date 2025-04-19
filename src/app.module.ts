@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { UsersModule } from './users/users.module';
 import { ConfigModule } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { dataSourceOptions } from './config/data-source';
 
 @Module({
   imports: [
@@ -8,7 +10,8 @@ import { ConfigModule } from '@nestjs/config';
       isGlobal: true,
       envFilePath: '.env',
     }),
-    UsersModule
+    TypeOrmModule.forRoot(dataSourceOptions),
+    UsersModule,
   ],
 })
 export class AppModule {}
