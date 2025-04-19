@@ -3,6 +3,8 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UsersMapper } from './mappers/users.mapper';
 import { IUsersRepository } from './users.repository.interface';
+import { UserResponseDto } from './dto/user-response.dto';
+import { UserAlreadyExistsError } from './errors/UserAlreadyExistsError';
 
 @Injectable()
 export class UsersService {
@@ -12,18 +14,27 @@ export class UsersService {
     private readonly mapper: UsersMapper,
   ) {}
 
-  async create(createUserDto: CreateUserDto) {
+  async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
     const userEntity = this.mapper.toEntity(createUserDto);
+
+    const existingUser = await this.repository.findByEmail(createUserDto.email);
+    if (existingUser) throw new UserAlreadyExistsError('User already exists');
+
     const result = await this.repository.create(userEntity);
+
     return this.mapper.toDto(result);
   }
 
-  findAll() {
-    return `This action returns all users`;
+  async findAll(): Promise<UserResponseDto[]> {
+    const usersEntity = await this.repository.findAll();
+    return this.mapper.toDtoArray(usersEntity);
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} user`;
+  async findById(id: string): Promise<UserResponseDto | null> {
+    const userEntity = await this.repository.findById(id);
+    if (!userEntity) return null;
+
+    return this.mapper.toDto(userEntity);
   }
 
   update(id: number, updateUserDto: UpdateUserDto) {

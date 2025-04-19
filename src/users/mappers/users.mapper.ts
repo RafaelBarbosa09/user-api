@@ -20,6 +20,7 @@ export class UsersMapper extends BaseMapper<
 
   toDto(entity: User): UserResponseDto {
     const dto = new UserResponseDto();
+    dto.id = entity.id;
     dto.username = entity.username;
     dto.email = entity.email;
     return dto;
