@@ -5,6 +5,8 @@ import { UsersMapper } from './mappers/users.mapper';
 import { IUsersRepository } from './users.repository.interface';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UserAlreadyExistsError } from './errors/UserAlreadyExistsError';
+import { UserNotFoundError } from './errors/UserNotFoundError';
+import { InvalidInputDataError } from './errors/InvalidInputDataError';
 
 @Injectable()
 export class UsersService {
@@ -15,6 +17,10 @@ export class UsersService {
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<UserResponseDto> {
+    if (!this.isValidInputData(createUserDto)) {
+      throw new InvalidInputDataError('Invalid input data');
+    }
+
     const userEntity = this.mapper.toEntity(createUserDto);
 
     const existingUser = await this.repository.findByEmail(createUserDto.email);
@@ -30,18 +36,35 @@ export class UsersService {
     return this.mapper.toDtoArray(usersEntity);
   }
 
-  async findById(id: string): Promise<UserResponseDto | null> {
+  async findById(id: string): Promise<UserResponseDto> {
     const userEntity = await this.repository.findById(id);
-    if (!userEntity) return null;
+    if (!userEntity) throw new UserNotFoundError('User not found');
 
     return this.mapper.toDto(userEntity);
   }
 
-  update(id: number, updateUserDto: UpdateUserDto) {
-    return `This action updates a #${id} user`;
+  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
+    const foundedUser = await this.repository.findById(id);
+    if (!foundedUser) throw new UserNotFoundError('User not found');
+
+    const userEntity = this.mapper.toEntity(updateUserDto);
+    const updatedUser = await this.repository.update(id, userEntity);
+
+    return this.mapper.toDto(updatedUser);
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} user`;
+  async remove(id: string): Promise<void> {  
+    const foundedUser = await this.repository.findById(id);
+    if (!foundedUser) throw new UserNotFoundError('User not found');
+
+    await this.repository.delete(id);
+  }
+
+  private isValidInputData(createUserDto: CreateUserDto): boolean {
+    return !!(
+      createUserDto.username &&
+      createUserDto.email &&
+      createUserDto.password
+    );
   }
 }

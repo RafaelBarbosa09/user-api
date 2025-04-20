@@ -32,4 +32,13 @@ export class UsersRepositoryImplementation implements IUsersRepository {
 
     return user;
   }
+
+  async update(id: string, user: User): Promise<User> {
+    await this.ormRepository.update(id, user);
+    return await this.ormRepository.findOne({ where: { id } }) as User;
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.ormRepository.delete(id);
+  }
 }
