@@ -35,7 +35,7 @@ export class UsersRepositoryImplementation implements IUsersRepository {
 
   async update(id: string, user: User): Promise<User> {
     await this.ormRepository.update(id, user);
-    return await this.ormRepository.findOne({ where: { id } }) as User;
+    return (await this.ormRepository.findOne({ where: { id } })) as User;
   }
 
   async delete(id: string): Promise<void> {

@@ -43,7 +43,10 @@ export class UsersService {
     return this.mapper.toDto(userEntity);
   }
 
-  async update(id: string, updateUserDto: UpdateUserDto): Promise<UserResponseDto> {
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserResponseDto> {
     const foundedUser = await this.repository.findById(id);
     if (!foundedUser) throw new UserNotFoundError('User not found');
 
@@ -53,7 +56,7 @@ export class UsersService {
     return this.mapper.toDto(updatedUser);
   }
 
-  async remove(id: string): Promise<void> {  
+  async remove(id: string): Promise<void> {
     const foundedUser = await this.repository.findById(id);
     if (!foundedUser) throw new UserNotFoundError('User not found');
 
