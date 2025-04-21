@@ -5,6 +5,7 @@ import { User } from './entities/users.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersMapper } from './mappers/users.mapper';
 import { UsersRepositoryImplementation } from './users.repository.implementation';
+import { HashingService } from 'src/common/hashing/hashing.service';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User])],
@@ -15,6 +16,10 @@ import { UsersRepositoryImplementation } from './users.repository.implementation
     {
       provide: 'IUsersRepository',
       useClass: UsersRepositoryImplementation,
+    },
+    {
+      provide: 'IHashingService',
+      useClass: HashingService,
     },
   ],
 })

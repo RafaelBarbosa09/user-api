@@ -7,12 +7,15 @@ import { UserResponseDto } from './dto/user-response.dto';
 import { UserAlreadyExistsError } from './errors/UserAlreadyExistsError';
 import { UserNotFoundError } from './errors/UserNotFoundError';
 import { InvalidInputDataError } from './errors/InvalidInputDataError';
+import { IHashingService } from 'src/common/hashing/hashing.service.interface';
 
 @Injectable()
 export class UsersService {
   constructor(
     @Inject('IUsersRepository')
     private readonly repository: IUsersRepository,
+    @Inject('IHashingService')
+    private readonly hashingService: IHashingService,
     private readonly mapper: UsersMapper,
   ) {}
 
@@ -21,7 +24,14 @@ export class UsersService {
       throw new InvalidInputDataError('Invalid input data');
     }
 
-    const userEntity = this.mapper.toEntity(createUserDto);
+    const hashedPassword = await this.hashingService.hashPassword(
+      createUserDto.password,
+    );
+
+    const userEntity = this.mapper.toEntity({
+      ...createUserDto,
+      password: hashedPassword,
+    });
 
     const existingUser = await this.repository.findByEmail(createUserDto.email);
     if (existingUser) throw new UserAlreadyExistsError('User already exists');

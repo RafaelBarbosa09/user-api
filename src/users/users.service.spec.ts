@@ -8,11 +8,13 @@ import { User } from './entities/users.entity';
 import { UserResponseDto } from './dto/user-response.dto';
 import { UserNotFoundError } from './errors/UserNotFoundError';
 import { InvalidInputDataError } from './errors/InvalidInputDataError';
+import { IHashingService } from 'src/common/hashing/hashing.service.interface';
 
 describe('UsersService', () => {
   let service: UsersService;
   let usersRepositoryMock: Partial<IUsersRepository>;
   let usersMapperMock: Partial<UsersMapper>;
+  let hashingServiceMock: Partial<IHashingService>;
   let createUserDto: CreateUserDto;
   let userEntity: User;
   let userResponseDto: UserResponseDto;
@@ -26,6 +28,10 @@ describe('UsersService', () => {
     usersMapperMock = {
       toEntity: jest.fn(),
       toDto: jest.fn(),
+    };
+
+    hashingServiceMock = {
+      hashPassword: jest.fn(),
     };
 
     createUserDto = {
@@ -56,6 +62,10 @@ describe('UsersService', () => {
           provide: 'IUsersRepository',
           useValue: usersRepositoryMock,
         },
+        {
+          provide: 'IHashingService',
+          useValue: hashingServiceMock,
+        },
       ],
     }).compile();
 
@@ -67,21 +77,35 @@ describe('UsersService', () => {
   });
 
   describe('create', () => {
+    let userWithHashedPassword: CreateUserDto;
+    let hashedPassword: string;
+
+    beforeEach(() => {
+      userWithHashedPassword = {
+        ...createUserDto,
+        password: 'hashedPassword',
+      };
+
+      hashedPassword = 'hashedPassword';
+    });
+
     it('should be able to create a user successfully', async () => {
       usersRepositoryMock.create = jest.fn().mockResolvedValue(userEntity);
+      hashingServiceMock.hashPassword = jest.fn().mockResolvedValue(hashedPassword);
       usersMapperMock.toEntity = jest.fn().mockReturnValue(userEntity);
       usersMapperMock.toDto = jest.fn().mockReturnValue(userResponseDto);
 
       const result = await service.create(createUserDto);
 
       expect(usersRepositoryMock.create).toHaveBeenCalledWith(userEntity);
-      expect(usersMapperMock.toEntity).toHaveBeenCalledWith(createUserDto);
+      expect(usersMapperMock.toEntity).toHaveBeenCalledWith(userWithHashedPassword);
       expect(usersMapperMock.toDto).toHaveBeenCalledWith(userEntity);
       expect(result).toEqual(userResponseDto);
     });
 
     it('should return an error if email already exists', async () => {
       usersRepositoryMock.findByEmail = jest.fn().mockResolvedValue(userEntity);
+      hashingServiceMock.hashPassword = jest.fn().mockResolvedValue(hashedPassword);
       usersMapperMock.toEntity = jest.fn().mockReturnValue(userEntity);
       usersMapperMock.toDto = jest.fn().mockReturnValue(userEntity);
 
@@ -93,7 +117,7 @@ describe('UsersService', () => {
         userEntity.email,
       );
 
-      expect(usersMapperMock.toEntity).toHaveBeenCalledWith(createUserDto);
+      expect(usersMapperMock.toEntity).toHaveBeenCalledWith(userWithHashedPassword);
       expect(usersRepositoryMock.create).not.toHaveBeenCalled();
       expect(usersMapperMock.toDto).not.toHaveBeenCalled();
     });

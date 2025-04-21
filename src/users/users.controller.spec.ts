@@ -13,6 +13,11 @@ describe('UsersController', () => {
       create: jest.fn(),
     };
 
+    const hashingServiceMock = {
+      hashPassword: jest.fn(),
+      comparePassword: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UsersController],
       providers: [
@@ -21,6 +26,10 @@ describe('UsersController', () => {
         {
           provide: 'IUsersRepository',
           useValue: usersRepositoryMock,
+        },
+        {
+          provide: 'IHashingService',
+          useValue: hashingServiceMock,
         },
       ],
     }).compile();
